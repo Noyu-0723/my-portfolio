@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>RPG</title>
+    <link rel="stylesheet" href="css/style.css"> <!-- CSSファイルのリンク -->
+    <!-- JavaScriptファイル -->
+    <script src="scripts/player.js"></script>
+    <script src="scripts/character.js"></script>
+    <script src="scripts/dungeon.js"></script>
+    <script src="scripts/city.js"></script>
+    <script src="scripts/script.js"></script>
+</head>
+<body>
+    <div id="game-container" style="display: none;"> <!-- 初期は非表示 -->
+        <!-- プレイヤーのセクション -->
+        <div class="character-status">
+            <img src="images/player.png" alt="プレイヤー画像" class="character-image">
+            <div class="status-details">
+                <h3>プレイヤー</h3>
+                <p>HP: <span id="player-hp"></span></p>
+                <p>MP: <span id="player-mp"></span></p>
+            </div>
+        </div>
+        
+        <!-- 敵のセクション -->
+        <div class="character-status">
+            <img id="enemy-image" alt="敵画像" class="character-image">
+            <div class="status-details">
+                <h3><spam id="enemy-name"></spam></h3>
+                <p>HP: <span id="enemy-hp"></span></p>
+                <p>攻撃力: <span id="enemy-attack"></span></p>
+            </div>
+        </div>
+        
+        <!-- アクションボタンセクション -->
+        <div id="default-actions" class="actions">
+            <button id="attack-button" onclick="attack()">攻撃する</button>
+            <button id="special-button" onclick="specialMenu()">特技</button>
+            <button id="use-potion-button" onclick="usePotion()">ポーションを使う</button>
+            <button id="escape-button" onclick="run()">逃げる</button>
+            <h5>ポーションの数: <span id="potion-count"></span></h5>
+        </div>
+        <div id="special-actions" class="actions" style="display: none;">
+            <button id="back-button" onclick="back()">戻る</button>
+            <button id="fire-button" onclick="fire()">ファイアー</button>
+            <button id="heal-button" onclick="heal()">ヒール</button>
+        </div>
+    </div>
+
+    <!-- 勝利時のボタン -->
+    <div id="victory" style="display: none;">
+        <button id="leave-button" onclick="leave()">この場を離れる</button>
+    </div>
+
+    <!-- 街 -->
+    <div id="city">
+        <div id="start-city" style="display: block;">
+            <img src="images/city.jpg" alt="街" class="city-images">
+            <button id="go-store" onclick="goStore()">武器防具屋へ行く</button>
+            <button id="go-bar" onclick="goBar()">酒場へ行く</button>
+            <button id="go-gate" onclick="goGate()">街の門へ行く</button>
+        </div>
+        <!-- 街の門 -->
+        <div id="gate" style="display: none;">
+            <img src="images/gate.jpg" alt="門" class="city-images">
+            <button class="city-back" onclick="cityBack()">戻る</button>
+            <button id="cave" onclick="searchDungeonCave()">始まりの洞窟へ行く</button>
+            <button id="forest" onclick="searchForest()">悪夢の森へ行く</button>
+        </div>
+        <!-- 武器防具屋 -->
+        <div id="store" style="display: none;">
+            <img src="images/store.jpg" alt="武器防具屋" class="city-images">
+            <button class="city-back" onclick="cityBack()">戻る</button>
+            <button class="dagger" onclick="buyDagger()">ダガーを買う</button>
+            <button class="longsword" onclick="buyLongsword()">ロングソードを買う</button>
+            <button class="cloth" onclick="buyCloth()">布の服を買う</button>
+            <button class="plate-armor" onclick="buyPlateArmor()">鉄の鎧を買う</button>
+        </div>
+        <!-- 酒場 -->
+        <div id="bar" style="display: none;">
+            <img src="images/bar.jpg" alt="酒場" class="city-images">
+            <button class="city-back" onclick="cityBack()">戻る</button>
+            <button id="bed" onclick="breakTime()">お金を払って休憩する</button>
+        </div>
+        <p id="gold-display" style="display: block;">ゴールド: <span id="gold">30</span>G</p>
+    </div>
+
+    <div id="dungeon">
+        <!-- 始まりの洞窟 -->
+        <div id="dungeon-cave" style="display: none;">
+            <img src="images/cave.jpg" alt="始まりの洞窟" class="dungeon-image">
+            <button class="go-dungeon" onclick="goDungeon(dungeonType)">先へ進む</button>
+            <button class="return-dungeon" onclick="returnDungeon(dungeonType)">引き返す</button>
+        </div>
+
+        <!-- 悪夢の森 -->
+        <div id="dungeon-forest" style="display: none;">
+            <img src="images/forest.jpg" alt="悪夢の森" class="dungeon-image">
+            <button class="go-dungeon" onclick="goDungeon(dungeonType)">先へ進む</button>
+            <button class="return-dungeon" onclick="returnDungeon(dungeonType)">引き返す</button>
+        </div>
+    </div>
+
+    <!-- ログ -->
+    <div id="log">
+        <div id="log-messages">
+            街だ<br>
+            遠くから喧騒が聞こえてくる
+        </div>
+    </div>
+
+</body>
+</html>
