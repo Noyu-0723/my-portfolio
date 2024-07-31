@@ -1,0 +1,90 @@
+/* 全体 */
+html {
+    font-family: sans-serif;
+    font-size: 16px;
+}
+
+/* 戦闘画面 */
+#game-container {
+    width: 600px;
+    margin: 0 auto;
+    text-align: center;
+}
+.character-status {
+    display: flex;  
+    align-items: center;
+    margin-bottom: 20px;
+}
+.character-image {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    margin-right: 20px;
+}
+.status-details {
+    text-align: left;
+}
+.actions {
+    margin-top: 20px;
+}
+
+/* 勝利時の画面 */
+#victory {
+    width: 600px;
+    margin: 0 auto;
+    text-align: center;
+}
+
+/* 街の画面 */
+#city {
+    width: 600px;
+    margin: 0 auto;
+    text-align: center;
+}
+.city-images {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: auto; 
+}
+#cave {
+    padding: 10px 20px;
+    font-size: 16px;
+    cursor: pointer;
+}
+#forest {
+    padding: 10px 20px;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+/* ダンジョン */
+#dungeon {
+    width: 600px;
+    margin: 0 auto;
+    text-align: center;
+}
+.dungeon-image {
+    display: flex;  
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+}
+
+/* ログメッセージ */
+#log {
+    width: 600px;
+    margin: 0 auto;
+    text-align: center;
+    
+    margin-top: 20px;
+    background-color: #f0f0f0;
+    padding: 10px;
+    border: 1px solid #ccc;
+}
+
+#log-messages {
+    height: 130px;
+    overflow-y: auto;
+    text-align: left;
+}
