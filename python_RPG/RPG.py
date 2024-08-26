@@ -1,3 +1,9 @@
+"""
+アイテム使用・説明追加
+墓場・洞窟の敵の詳細書く
+宝箱システム
+"""
+
 import random
 import subprocess
 import time
@@ -6,26 +12,30 @@ import sys
 KP = 0 # 経験値
 BP = 0 # ダンジョンの階層
 SP = 0 # 死神の出現フラグ
-PP = 0 # ポーション(ゴブリン)
-NKP = 0 # 拘束時間
 MKP = 0 # 無敵時間
-EP = 0 # 英雄の証
-EEP = 0 # 古代の進化(ゴーレム)
-GA = 0 # ドラゴンの攻撃パターン制御
-GOLD = 1000 # ゴールド
+EP = 2 # 英雄の証
+GOLD = 300 # ゴールド
+game_type = False
+player_str = {} # 自キャラのステータス一覧
+enemy_str = {} # 敵キャラのステータス一覧
+shop_weapon_list = [["ダガー", 30, 300], ["ロングソード", 70, 700], ["モーニングスター", 150, 1500]] # 装備一覧
+shop_item_list = [["ポーション", 50], ["スライムゼリー", 80], ["聖印", 500]] # アイテム一覧
+item_list = {} # アイテムの名前・説明・効果
 
 # ゲームスタート
 def main():
+    global game_type
     subprocess.call("cls", shell=True)
-    game_type = False
     player_name = input("プレイヤーの名前を入力してください: ")
     if player_name == "Untot":
-        player = Player_True(player_name, 700, 200, 100, 30, 10, 200, 3, 250, 3, 1, 0, 0, [])
+        player = Player_True(player_name, 900, 200, 100, 30, 10, 250, 1, 250, 3, 1, 0, 0, [], ["なし", 0, 0])
         game_type = True
     elif player_name == "ああああ":
-        player = Player(player_name, 999, 9999, 9999, 99, 99, 999, 99, 999, 99, ["英雄の証", "透明な液体", "古代の秘宝", "古代の秘宝", "伝説の宝玉"])
+        player = Player(player_name, 999, 9999, 9999, 99, 99, 999, 99, 999, 99, ["英雄の証", "透明な液体", "古代の秘宝", "古代の秘宝", "伝説の宝玉"], 0)
+    elif player_name == "SUPER BOSS":
+        player = Player(player_name, 400, 125, 55, 50, 6, 125, 5, 110, 5, ["英雄の証", "古代の秘宝", "古代の秘宝", "吸血の牙", "吸血の牙"], 0)
     else:
-        player = Player(player_name, 100, 20, 0, 5, 1, 25, 2, 35, 2, [])
+        player = Player(player_name, 100, 25, 5, 10, 1, 25, 2, 35, 2, [], 0)
     subprocess.call("cls", shell=True)
     if game_type:
         enemies = town(player)
@@ -67,15 +77,15 @@ def main():
                         enemies = town(player)
                         break
                     elif select == "3":
-                        itemK(player)
+                        item_org(player)
                     else:
                         print("そんなコマンドはない！")
     else:
-        homeStart(player)
-        enemies = createEnemies_False()
+        home_start(player)
+        enemies = create_enemies()
         # メインループ
         while True:
-            if SP % 5 == 0 and SP != 0:
+            if SP % 3 == 0 and SP != 0:
                 enemy = enemies[7]
             else:
                 if BP <= 1:
@@ -115,13 +125,13 @@ def main():
                         home(player)
                         break
                     elif select == "3":
-                        itemK(player)
+                        item_org(player)
                     else:
                         print("そんなコマンドはない！")
 
 # プレイヤー
 class Player:
-    def __init__(self, name, hp, attack, defence, speed, level, Heal, HealC, Fire, FireC, item):
+    def __init__(self, name, hp, attack, defence, speed, level, Heal, HealC, Fire, FireC, item, state):
         self.name = name
         self.hp = hp
         self.max_hp = hp
@@ -139,11 +149,12 @@ class Player:
         self.FireC = FireC
         self.FireC_S = FireC
         self.item = item
+        self.state = state
     
     def __str__(self):
         return "{}: {} / {}".format(self.name, self.hp, self.max_hp)
     
-    def printStr(self):
+    def print_str(self):
         subprocess.call("cls", shell=True)
         time.sleep(0.5)
         print("レベル：{}".format(self.level))
@@ -164,9 +175,8 @@ class Player:
         time.sleep(0.2)
         print("魔法回復力：{}".format(self.Heal))
         time.sleep(0.2)
-        print("特技使用回数(ヒール)：{}".format(self.HealC))
+        print("特技使用回数(ヒール)：{}\n".format(self.HealC))
         time.sleep(0.2)
-        print("\n")
 
     def attack_enemy(self, enemy):
         crt1 = random.randint(1, 10)
@@ -226,10 +236,10 @@ class Player:
     def level_up(self):
         self.level += 1
         self.max_hp += 60
-        self.attack_S += 15
+        self.attack_S += 20
         self.defence_S += 10
-        self.speed_S += 5
-        self.Heal += 15
+        self.speed_S += 8
+        self.Heal += 20
         self.Fire += 15
         self.hp = self.max_hp
         print("{}はレベルアップした！".format(self.name))
@@ -254,7 +264,7 @@ class Player:
             print("特技の使用回数が増えた")
             time.sleep(0.5)
 class Player_True(Player):
-    def __init__(self, name, hp, attack, defence, speed, level, Heal, HealC, Fire, FireC, PowerC, SpecialC, state, item):
+    def __init__(self, name, hp, attack, defence, speed, level, Heal, HealC, Fire, FireC, PowerC, SpecialC, state, item, weapon):
         self.name = name
         self.hp = hp
         self.max_hp = hp
@@ -277,6 +287,7 @@ class Player_True(Player):
         self.state = state
         self.state_S = state
         self.item = item
+        self.weapon = weapon
     
     def attack_enemy(self, enemy):
         crt1 = random.randint(1, 10)
@@ -312,7 +323,7 @@ class Player_True(Player):
             time.sleep(0.5)
             return
         self.PowerC -= 1
-        miss = random.randint(0, 2)
+        miss = random.randint(0, 5)
         print("{}は、洗練された動きから渾身の一撃を繰り出す…！".format(self.name))
         time.sleep(1.5)
         if miss == 0:
@@ -390,14 +401,16 @@ class Player_True(Player):
             print("{}のダメージを与えた！".format(int(fire_points)))
             time.sleep(0.5) 
 
-    def printStr(self):
+    def print_str(self):
         subprocess.call("cls", shell=True)
         time.sleep(0.5)
         print("レベル：{}".format(self.level))
         time.sleep(0.2)
         print("名前：{}".format(self.name))
         time.sleep(0.2)
-        print("所持金：{}G".format(GOLD))
+        print("所持金：{} G".format(GOLD))
+        time.sleep(0.2)
+        print("武器：{}({})".format(self.weapon[0], self.weapon[1]))
         time.sleep(0.2)
         print("HP：{} / {}".format(self.hp, self.max_hp))
         time.sleep(0.2)
@@ -417,9 +430,8 @@ class Player_True(Player):
         time.sleep(0.2)
         print("特技使用回数(渾身の一撃)：{}".format(self.PowerC))
         time.sleep(0.2)
-        print("特技使用回数(必殺)：{}".format(self.SpecialC))
+        print("特技使用回数(必殺)：{}\n".format(self.SpecialC))
         time.sleep(0.2)
-        print("\n")
 
 # 敵キャラ
 class Enemy:
@@ -437,15 +449,7 @@ class Enemy:
         return "{}: {} / {}".format(self.name, self.hp, self.max_hp)
     
     def attack_player(self, player):
-        global NKP, MKP
-        if NKP >= 1:
-            time.sleep(0.5)
-            print("{}の攻撃！".format(self.name))
-            time.sleep(0.5)
-            print("しかし攻撃は当たらなかった")
-            time.sleep(0.5)
-            NKP -= 1
-            return
+        global MKP
         damage = self.attack + random.randint(-2, 2) - player.defence
         if damage < 1:
             damage = 1
@@ -457,17 +461,17 @@ class Enemy:
         time.sleep(0.8)
         print("{}のダメージをくらった！".format(int(damage)))
         time.sleep(0.5)
-class EnemySli(Enemy): # スライム
+    
+    def attack_player_miss(self, miss_attack):
+        time.sleep(0.5)
+        print("{}の攻撃！".format(self.name))
+        time.sleep(0.5)
+        print("しかし攻撃は当たらなかった")
+        time.sleep(0.5)
+        miss_attack -= 1
+class Enemy_Sli(Enemy): # スライム
     def attack_player(self, player):
-        global NKP, MKP
-        if NKP >= 1:
-            time.sleep(0.5)
-            print("{}の攻撃！".format(self.name))
-            time.sleep(0.5)
-            print("しかし攻撃は当たらなかった")
-            time.sleep(0.5)
-            NKP -= 1
-            return
+        global MKP
         SA = random.randint(1, 5)
         if SA <= 2:
             damage = self.attack + random.randint(3, 10)
@@ -491,26 +495,30 @@ class EnemySli(Enemy): # スライム
             time.sleep(0.8)
             print("{}のダメージをくらった！".format(int(damage)))
             time.sleep(0.5)
-class EnemyGob(Enemy): # ゴブリン
+class Enemy_Gob(Enemy): # ゴブリン
+    def __init__(self, name, hp, attack, defence, speed, level, item, portion):
+        self.name = name
+        self.hp = hp
+        self.max_hp = hp
+        self.attack = attack
+        self.defence = defence
+        self.speed = speed
+        self.level = level
+        self.item = item
+        self.portion = portion
+        self.portion_S = portion
+    
     def attack_player(self, player):
-        global PP, NKP, MKP
-        if NKP >= 1:
-            time.sleep(0.5)
-            print("{}の攻撃！".format(self.name))
-            time.sleep(0.5)
-            print("しかし攻撃は当たらなかった")
-            time.sleep(0.5)
-            NKP -= 1
-            return
+        global MKP
         gobATT = random.randint(1, 4)
-        portion = random.randint(28, 31)
-        if gobATT == 1 and self.hp < 20 and PP == 0:
+        if gobATT == 1 and self.hp < 20 and self.portion == 0:
+            portion = random.randint(28, 31)
             print("{}はポーションを使った".format(self.name))
             time.sleep(0.8)
             print("{}回復した".format(portion))
             time.sleep(0.5)
             self.hp += portion
-            PP += 1
+            self.portion += 1
         elif gobATT == 2 and self.hp < 30:
             damage = 30 + random.randint(-2, 2)
             if MKP >= 1:
@@ -533,17 +541,9 @@ class EnemyGob(Enemy): # ゴブリン
             time.sleep(0.8)
             print("{}のダメージをくらった！".format(int(damage)))
             time.sleep(0.5)
-class EnemyGho(Enemy): # ゴースト
+class Enemy_Gho(Enemy): # ゴースト
     def attack_player(self, player):
-        global NKP, MKP
-        if NKP >= 1:
-            time.sleep(0.5)
-            print("{}の攻撃！".format(self.name))
-            time.sleep(0.5)
-            print("しかし攻撃は当たらなかった")
-            time.sleep(0.5)
-            NKP -= 1
-            return
+        global MKP
         GH_attack = random.randint(1, 5)
         if GH_attack == 1 and len(player.item) >= 1:
             del_item = player.item.pop(0)
@@ -563,7 +563,7 @@ class EnemyGho(Enemy): # ゴースト
             time.sleep(0.8)
             print("{}のダメージをくらった！".format(int(damage)))
             time.sleep(0.5)
-class EnemyZom(Enemy): # ゾンビ
+class Enemy_Zom(Enemy): # ゾンビ
     def __init__(self, name, hp, attack, defence, speed, level, item, revival):
         self.name = name
         self.hp = hp
@@ -575,17 +575,9 @@ class EnemyZom(Enemy): # ゾンビ
         self.item = item
         self.revival = revival
         self.revival_S = revival
-class EnemySco(Enemy): # スコーピオン
+class Enemy_Sco(Enemy): # スコーピオン
     def attack_player(self, player):
-        global NKP, MKP
-        if NKP >= 1:
-            time.sleep(0.5)
-            print("{}の攻撃！".format(self.name))
-            time.sleep(0.5)
-            print("しかし攻撃は当たらなかった")
-            time.sleep(0.5)
-            NKP -= 1
-            return
+        global MKP
         T = random.randint(1, 5)
         if T == 1:
             damage = self.attack * 1.4 + random.randint(-2, 2)
@@ -605,17 +597,9 @@ class EnemySco(Enemy): # スコーピオン
         time.sleep(0.8)
         print("{}のダメージをくらった！".format(int(damage)))
         time.sleep(0.5)
-class EnemyKel(Enemy): # ケルベロス
+class Enemy_Kel(Enemy): # ケルベロス
     def attack_player(self, player):
-        global NKP, MKP
-        if NKP >= 1:
-            time.sleep(0.5)
-            print("{}の攻撃！".format(self.name))
-            time.sleep(0.5)
-            print("しかし攻撃は当たらなかった")
-            time.sleep(0.5)
-            NKP -= 1
-            return
+        global MKP
         T = random.randint(1, 5)
         if T <= 2:
             print("{}の「二連撃」".format(self.name))
@@ -642,17 +626,9 @@ class EnemyKel(Enemy): # ケルベロス
         time.sleep(0.5)
         if MKP >= 1:
             MKP -= 1
-class EnemyVan(Enemy): # ヴァンパイア
+class Enemy_Van(Enemy): # ヴァンパイア
     def attack_player(self, player):
-        global NKP, MKP
-        if NKP >= 1:
-            time.sleep(0.5)
-            print("{}の攻撃！".format(self.name))
-            time.sleep(0.5)
-            print("しかし攻撃は当たらなかった")
-            time.sleep(0.5)
-            NKP -= 1
-            return
+        global MKP
         T = random.randint(1, 5)
         if T <= 1 and self.hp < self.max_hp / 2:
             damage = int(self.attack * 1.5 + random.randint(-2, 2) - player.defence)
@@ -681,19 +657,23 @@ class EnemyVan(Enemy): # ヴァンパイア
             print("{}のダメージをくらった！".format(damage))
         player.hp -= damage
         time.sleep(0.5)
-class EnemyGol(Enemy): # ゴーレム
+class Enemy_Gol(Enemy): # ゴーレム
+    def __init__(self, name, hp, attack, defence, speed, level, item, evolution):
+        self.name = name
+        self.hp = hp
+        self.max_hp = hp
+        self.attack = attack
+        self.defence = defence
+        self.speed = speed
+        self.level = level
+        self.item = item
+        self.evolution = evolution
+        self.evolution_S = evolution
+
     def attack_player(self, player):
-        global NKP, MKP, EEP
-        if NKP >= 1:
-            time.sleep(0.5)
-            print("{}の攻撃！".format(self.name))
-            time.sleep(0.5)
-            print("しかし攻撃は当たらなかった")
-            time.sleep(0.5)
-            NKP -= 1
-            return
+        global MKP
         T = random.randint(1, 5)
-        if self.hp <= self.max_hp / 2 and EEP == 0:
+        if self.hp <= self.max_hp / 2 and self.evolution == 0:
             print("{}の「古代の進化」".format(self.name))
             time.sleep(0.5)
             self.hp = self.max_hp
@@ -705,7 +685,7 @@ class EnemyGol(Enemy): # ゴーレム
             self.attack += 20
             print("{}の攻撃力が上昇した".format(self.name))
             time.sleep(0.5)
-            EEP += 1
+            self.evolution += 1
         elif T <= 2:
             damage = self.attack * 1.4 + random.randint(-2, 2)
             if MKP >= 1:
@@ -728,23 +708,15 @@ class EnemyGol(Enemy): # ゴーレム
             player.hp -= int(damage)
             print("{}のダメージをくらった！".format(int(damage)))
             time.sleep(0.5)
-class EnemyHyu(Enemy): # ヒュドラ
+class Enemy_Hyu(Enemy): # ヒュドラ
     def attack_player(self, player):
-        global NKP, MKP
-        if NKP >= 1:
-            time.sleep(0.5)
-            print("{}の攻撃！".format(self.name))
-            time.sleep(0.5)
-            print("しかし攻撃は当たらなかった")
-            time.sleep(0.5)
-            NKP -= 1
-            return
+        global MKP
         T = random.randint(1, 5)
         if T <= 3 and self.hp < self.max_hp / 2:
             print("{}の「五連撃」".format(self.name))
             damage = 0
             for _ in range(5):
-                damage5 = random.randint(30, 40) - player.defence / 10
+                damage5 = int(random.randint(30, 40) - player.defence / 10)
                 if damage5 < 1:
                     damage5 = 1
                 if MKP >= 1:
@@ -765,27 +737,30 @@ class EnemyHyu(Enemy): # ヒュドラ
         time.sleep(0.5)
         if MKP >= 1:
             MKP -= 1
-class BOSSEnemyDor(Enemy): # ドラゴン
+class BOSSEnemy_Dor(Enemy): # ドラゴン
+    def __init__(self, name, hp, attack, defence, speed, level, item, attack_state):
+        self.name = name
+        self.hp = hp
+        self.max_hp = hp
+        self.attack = attack
+        self.defence = defence
+        self.speed = speed
+        self.level = level
+        self.item = item
+        self.attack_state = attack_state
+
     def attack_player(self, player):
-        global NKP, MKP, GA
-        if NKP >= 1:
-            time.sleep(0.5)
-            print("{}の攻撃！".format(self.name))
-            time.sleep(0.5)
-            print("しかし攻撃は当たらなかった")
-            time.sleep(0.5)
-            NKP -= 1
-            return
+        global MKP
         T = random.randint(1, 5)
-        if T <= 1 and self.hp < self.max_hp / 2:
+        if T <= 2 and self.hp < self.max_hp / 2:
             print("{}は灼熱の火炎を吐いた".format(self.name))
             damage = int(self.attack * 1.5 + random.randint(-15, 15))
             if MKP >= 1:
                 damage = 0
             time.sleep(1.0)
             print("{}のダメージをくらった！".format(damage))
-        elif GA == 0:
-            GA += 3
+            self.attack_state = 0
+        elif self.attack_state / 3 == 0:
             print("{}の「五連撃」".format(self.name))
             damage = 0
             for _ in range(5):
@@ -797,6 +772,7 @@ class BOSSEnemyDor(Enemy): # ドラゴン
                 time.sleep(0.8)
                 print("{}のダメージをくらった！".format(damage5))
                 damage += damage5
+            self.attack_state += 1
         else:
             damage = int(self.attack + random.randint(-2, 2) - player.defence)
             if damage < 1:
@@ -806,13 +782,62 @@ class BOSSEnemyDor(Enemy): # ドラゴン
             print("{}の攻撃".format(self.name))
             time.sleep(0.8)
             print("{}のダメージをくらった！".format(damage))
+            self.attack_state += 1
         player.hp -= damage
         time.sleep(0.5)
         if MKP >= 1:
             MKP -= 1
-        if GA >=1:
-            GA -= 1
-
+class BOSSEnemy_Death(Enemy): # 死神
+    def attack_player(self, player):
+        global MKP
+        T = random.randint(1, 5)
+        if T <= 1:
+            if player.state == 0:
+                print("{}の「死の刻印」".format(self.name))
+                time.sleep(0.5)
+                print("{}は死の刻印を体に刻まれてしまった".format(self.name))
+                time.sleep(0.5)
+                player.state = 1
+                return
+            elif player.state == 1:
+                print("{}に刻まれていた死の刻印がその効果を発揮する…！")
+                time.sleep(0.5)
+                damage = 4444
+                if MKP >= 1:
+                    damage2 = 0
+                print("{}のダメージをくらった！".format(int(damage)))
+                player.state = 0
+        elif T <= 2:
+            self.attack *= 1.1
+            self.defence *= 1.1
+            self.hp += 100
+            if self.hp > self.max_hp:
+                self.hp = self.max_hp
+            print("{}の「シャドウステップ」".format(self.name))
+            time.sleep(0.8)
+            print("{}の攻撃力が上昇した！".format(self.name))
+            time.sleep(0.5)
+            print("{}の防御力が上昇した！".format(self.name))
+            time.sleep(0.5)
+            print("{}のhpが回復した！".format(self.name))
+            time.sleep(0.5)
+            return
+        else:
+            print("{}の「連撃」".format((self.name)))
+            damage = 0
+            for _ in range(2):
+                damage2 = int(self.attack * 0.6 + random.randint(-5, 5))
+                if MKP >= 1:
+                    damage2 = 0
+                time.sleep(0.8)
+                print("{}のダメージをくらった！".format(damage2))
+                damage += damage2
+        player.hp -= int(damage)
+        time.sleep(0.8)
+        if MKP >= 1:
+            MKP -= 1
+        
+# 失意の館
 class Enemy_True:
     def __init__(self, name, hp, attack, defence, speed, level, item, gold):
         self.name = name
@@ -827,17 +852,17 @@ class Enemy_True:
     
     def __str__(self):
         return "{}: {} / {}".format(self.name, self.hp, self.max_hp)
-class EnemyNight(Enemy_True): # ナイトメア
+    
+    def attack_player_miss(self, miss_attack):
+        time.sleep(0.5)
+        print("{}の攻撃！".format(self.name))
+        time.sleep(0.5)
+        print("しかし攻撃は当たらなかった")
+        time.sleep(0.5)
+        miss_attack -= 1
+class Enemy_Night(Enemy_True): # ナイトメア
     def attack_player(self, player):
-        global NKP, MKP
-        if NKP >= 1:
-            time.sleep(0.5)
-            print("{}の攻撃！".format(self.name))
-            time.sleep(0.5)
-            print("しかし攻撃は当たらなかった")
-            time.sleep(0.5)
-            NKP -= 1
-            return
+        global MKP
         SA = random.randint(1, 5)
         if SA <= 3:
             print("{}の「悪夢の一撃」".format(self.name))
@@ -849,7 +874,7 @@ class EnemyNight(Enemy_True): # ナイトメア
             if MKP >= 1:
                 damage = 0
             time.sleep(0.8)
-            if random.randint(0, 2) == 1:
+            if random.randint(0, 2) == 1 and "聖印" not in player.item:
                 player.state += 1
                 print("{}は恐怖で足がすくんでしまった".format(player.name))
         else:
@@ -865,17 +890,9 @@ class EnemyNight(Enemy_True): # ナイトメア
         player.hp -= int(damage)
         if MKP >= 1:
             MKP -= 1
-class EnemyMar(Enemy_True): # マリオネット
+class Enemy_Mar(Enemy_True): # マリオネット
     def attack_player(self, player):
-        global NKP, MKP
-        if NKP >= 1:
-            time.sleep(0.5)
-            print("{}の攻撃！".format(self.name))
-            time.sleep(0.5)
-            print("しかし攻撃は当たらなかった")
-            time.sleep(0.5)
-            NKP -= 1
-            return
+        global MKP
         SA = random.randint(1, 5)
         if SA <= 2:
             print("{}の「剣の舞」".format(self.name))
@@ -910,17 +927,9 @@ class EnemyMar(Enemy_True): # マリオネット
         player.hp -= int(damage)
         if MKP >= 1:
             MKP -= 1
-class EnemyDeaPer(Enemy_True): # デスペラード
+class Enemy_DeaPer(Enemy_True): # デスペラード
     def attack_player(self, player):
-        global NKP, MKP
-        if NKP >= 1:
-            time.sleep(0.5)
-            print("{}の攻撃！".format(self.name))
-            time.sleep(0.5)
-            print("しかし攻撃は当たらなかった")
-            time.sleep(0.5)
-            NKP -= 1
-            return
+        global MKP
         SA = random.randint(1, 5)
         if SA <= 1:
             print("{}の「死の弾丸」".format(self.name))
@@ -947,17 +956,9 @@ class EnemyDeaPer(Enemy_True): # デスペラード
         player.hp -= int(damage)
         if MKP >= 1:
             MKP -= 1
-class EnemyWitch(Enemy_True): # 失意の魔女
+class BOSSEnemy_Witch(Enemy_True): # 失意の魔女
     def attack_player(self, player):
-        global NKP, MKP
-        if NKP >= 1:
-            time.sleep(0.5)
-            print("{}の攻撃！".format(self.name))
-            time.sleep(0.5)
-            print("しかし攻撃は当たらなかった")
-            time.sleep(0.5)
-            NKP -= 1
-            return
+        global MKP
         SA = random.randint(1, 5)
         if SA <= 2:
             print("{}の「絶望の呪詛」".format(self.name))
@@ -974,7 +975,7 @@ class EnemyWitch(Enemy_True): # 失意の魔女
                 damage += damage3
                 if random.randint(0, 9) == 1:
                     state = True
-            if state:
+            if state and "聖印" not in player.item:
                 player.state += 1
                 time.sleep(0.5)
                 print("{}は恐怖で足がすくんでしまった".format(player.name))
@@ -987,7 +988,7 @@ class EnemyWitch(Enemy_True): # 失意の魔女
             time.sleep(0.5)
             print("{}の防御力が減少してしまった".format(player.name))
             time.sleep(0.8)
-            if random.randint(0, 3) == 1:
+            if random.randint(0, 3) == 1 and "聖印" not in player.item:
                 player.state += 1
                 print("{}は恐怖で足がすくんでしまった".format(player.name))
                 time.sleep(0.5)
@@ -1006,27 +1007,162 @@ class EnemyWitch(Enemy_True): # 失意の魔女
         if MKP >= 1:
             MKP -= 1
 
+# 絶望の墓場
+class Enemy_DarGho(Enemy_True):  # ダークゴースト
+    def attack_player(self, player):
+        print("{}の「呪いの叫び」".format(self.name))
+        player.attack *= 0.9
+        time.sleep(0.5)
+        print("{}の攻撃力が減少した".format(player.name))
+class Enemy_GriZom(Enemy_True):  # グリムゾンビ
+    def attack_player(self, player):
+        print("{}の攻撃".format(self.name))
+        damage = self.attack + random.randint(-2, 2) - player.defence
+        if damage < 1:
+            damage = 1
+        print("{}のダメージをくらった！".format(int(damage)))
+        time.sleep(0.5)
+        player.hp -= int(damage)
+        self.hp += 20
+        print("{}はHPを20回復した".format(self.name))
+class Enemy_DeaHou(Enemy_True):  # デスハウンド
+    def attack_player(self, player):
+        print("{}の「暗黒の噛みつき」".format(self.name))
+        damage = self.attack + random.randint(-2, 2) - player.defence
+        if damage < 1:
+            damage = 1
+        time.sleep(0.5)
+        player.hp -= int(damage)
+        print("{}のダメージをくらった！".format(int(damage)))
+        if random.randint(1, 5) == 1:
+            player.state += 1
+            print("{}は毒状態になった！".format(player.name))
+class BOSSEnemy_VanLor(Enemy_True):  # ヴァンパイアロード
+    def attack_player(self, player):
+        global MKP
+        if MKP >= 1:
+            damage = 0
+        else:
+            damage = self.attack + random.randint(-2, 2) - player.defence
+            if damage < 1:
+                damage = 1
+        print("{}の「骨の盾」".format(self.name))
+        time.sleep(0.5)
+        print("{}のダメージを半減する".format(self.name))
+        time.sleep(0.5)
+        player.hp -= int(damage)
+
+# 終焉の洞窟
+class Enemy_InfeSli(Enemy_True):  # インフェルノスライム
+    def attack_player(self, player):
+        print("{}の「亡者の剣」".format(self.name))
+        damage = self.attack + random.randint(-2, 2) - player.defence
+        if damage < 1:
+            damage = 1
+        print("{}のダメージをくらった！".format(int(damage)))
+        player.hp -= int(damage)
+        self.hp += int(damage * 0.1)
+        print("{}はHPを回復した".format(self.name))
+class Enemy_HighGob(Enemy_True):  # ハイゴブリン
+    def attack_player(self, player):
+        print("{}の「暗黒魔法」".format(self.name))
+        damage = self.attack + random.randint(-2, 2) - player.defence
+        if damage < 1:
+            damage = 1
+        time.sleep(0.5)
+        print("{}のダメージをくらった！".format(int(damage)))
+        player.hp -= int(damage)
+        if random.randint(1, 3) == 1:
+            player.state += 1
+            print("{}は麻痺状態になった！".format(player.name))
+class Enemy_ObsidianGol(Enemy_True):  # オブシディアンゴーレム
+    def __init__(self, name, hp, attack, defence, speed, level, item, gold, evolution):
+        self.name = name
+        self.hp = hp
+        self.max_hp = hp
+        self.attack = attack
+        self.defence = defence
+        self.speed = speed
+        self.level = level
+        self.item = item
+        self.gold = gold
+        self.evolution = evolution
+        self.evolution_S = evolution
+
+    def attack_player(self, player):
+        global MKP
+        T = random.randint(1, 5)
+        if self.hp <= self.max_hp / 2 and self.evolution == 0:
+            print("{}の「古代の進化」".format(self.name))
+            time.sleep(0.5)
+            self.hp = self.max_hp
+            print("{}のhpが最大になった".format(self.name))
+            time.sleep(0.5)
+            self.defence += 10
+            print("{}の防御力が上昇した".format(self.name))
+            time.sleep(0.5)
+            self.attack += 20
+            print("{}の攻撃力が上昇した".format(self.name))
+            time.sleep(0.5)
+            self.evolution += 1
+        elif T <= 2:
+            damage = self.attack * 1.4 + random.randint(-2, 2)
+            if MKP >= 1:
+                damage = 0
+                MKP -= 1
+            print("{}の「破滅の一撃」".format((self.name)))
+            time.sleep(0.8)
+            player.hp -= int(damage)
+            print("{}のダメージをくらった！".format(int(damage)))
+            time.sleep(0.5)
+        else:
+            damage = self.attack + random.randint(-2, 2) - player.defence
+            if damage < 1:
+                damage = 1
+            if MKP >= 1:
+                damage = 0
+                MKP -= 1
+            print("{}の攻撃".format((self.name)))
+            time.sleep(0.8)
+            player.hp -= int(damage)
+            print("{}のダメージをくらった！".format(int(damage)))
+            time.sleep(0.5)
+class BOSSEnemy_ShadowDra(Enemy_True):  # シャドウドラゴン
+    def attack_player(self, player):
+        print("{}の「闇のブレス」".format(self.name))
+        damage = self.attack + random.randint(-2, 2) - player.defence
+        if damage < 1:
+            damage = 1
+        print("全体攻撃を行った！")
+        time.sleep(0.5)
+        player.hp -= int(damage)
+        print("{}のダメージをくらった！".format(int(damage)))
+        if random.randint(1, 2) == 1:
+            print("{}の視界が奪われた！命中率が下がる".format(player.name))
+
 # 戦闘
 def battle(player, enemy):
-    global PP, NKP, MKP, EEP, GA
-    PP = 0
-    NKP = 0
+    global MKP
     MKP = 0
-    EEP = 0
+    miss_attack = 0
     enemy.hp = enemy.max_hp
     if enemy.name == "ゾンビ":
         enemy.revival = enemy.revival_S
+    elif enemy.name == "ゴーレム":
+        enemy.evolution = enemy.evolution_S
+    elif enemy.name == "ゴブリン":
+        enemy.portion = enemy.portion_S
     player.speed = player.speed_S
     player.attack = player.attack_S
     player.defence = player.defence_S
     player.HealC = player.HealC_S
     player.FireC = player.FireC_S
     if "透明な指輪" in player.item:
-        player.speed += 20
+        player.speed += 50
     if "古びた指輪" in player.item:
-        player.attack += 5
+        player.attack += 15
     if "鋼鉄の指輪" in player.item:
-        player.defence += 7
+        player.defence += 10
     time.sleep(0.5)
     print("{}が現れた！".format(enemy.name))
     while True:
@@ -1039,13 +1175,19 @@ def battle(player, enemy):
             if player.speed >= enemyS:
                 player.attack_enemy(enemy)
                 if enemy.hp > 0:
-                    enemy.attack_player(player)
-                    usezomring(player)
+                    if miss_attack >= 1:
+                        enemy.attack_player_miss(miss_attack)
+                    else:
+                        enemy.attack_player(player)
+                    zomring_use(player)
             elif player.speed < enemyS:
-                enemy.attack_player(player)
+                if miss_attack >= 1:
+                    enemy.attack_player_miss(miss_attack)
+                else:
+                    enemy.attack_player(player)
                 if player.hp > 0:
                     player.attack_enemy(enemy)
-                    usezomring(player)
+                    zomring_use(player)
         elif command == "s":
             while True:
                 print(player)
@@ -1059,8 +1201,11 @@ def battle(player, enemy):
                         print("もう回復呪文は使えない！")
                     else:
                         player.heal()
-                        enemy.attack_player(player)
-                        usezomring(player)
+                        if miss_attack >= 1:
+                            enemy.attack_player_miss(miss_attack)
+                        else:
+                            enemy.attack_player(player)
+                        zomring_use(player)
                         break
                 elif command_next == "f":
                     if player.FireC <= 0:
@@ -1068,8 +1213,11 @@ def battle(player, enemy):
                     else:
                         player.fire(enemy)
                         if enemy.hp > 0:
-                            enemy.attack_player(player)
-                        usezomring(player)
+                            if miss_attack >= 1:
+                                enemy.attack_player_miss(miss_attack)
+                            else:
+                                enemy.attack_player(player)
+                        zomring_use(player)
                         break
                 elif command_next == " ":
                     break
@@ -1089,7 +1237,7 @@ def battle(player, enemy):
                 subprocess.call("cls", shell=True)
                 try:
                     if 0 <= int(select) - 1 and int(select) - 1 <= 4:
-                        useItem(player, enemy, player.item[int(select) - 1], int(select) - 1)
+                        item_use(player, enemy, player.item[int(select) - 1], int(select) - 1, miss_attack)
                         time.sleep(0.5)
                         break
                     else:
@@ -1113,69 +1261,24 @@ def battle(player, enemy):
             else:
                 print("逃げられなかった")
                 time.sleep(0.8)
-                enemy.attack_player(player)
-                usezomring(player)
+                if miss_attack >= 1:
+                    enemy.attack_player_miss(miss_attack)
+                else:
+                    enemy.attack_player(player)
+                zomring_use(player)
         else:
             print("そんなコマンドはない！")
-        if enemy_defeat(player, enemy):
+        if defeat_enemy(player, enemy):
             break
-        if player_defeat(player):
+        if defeat_player(player):
             break
-def battle_win(player, enemy):
-    global KP, BP
-    if enemy.name == "ヒュドラ":
-        time.sleep(0.5)
-        print("{}を倒した！".format(enemy.name))
-        BP += 1
-        time.sleep(0.8)
-        if player.level <= enemy.level:
-            KP += 2
-            if KP % 2 == 0:
-                player.level_up()
-    else:
-        time.sleep(0.5)
-        print("{}を倒した！".format(enemy.name))
-        BP += 1
-        time.sleep(0.8)
-        if player.level <= enemy.level:
-            KP += 1
-            if KP % 2 == 0:
-                player.level_up()
-    getItem(player, enemy)
-def enemy_defeat(player, enemy):
-    if enemy.hp <= 0:
-        if enemy.name == "ゾンビ":
-            f = random.randint(1, 5)
-            if f <= 4 and enemy.revival >= 1:
-                print("{}を倒した！".format(enemy.name))
-                time.sleep(1.0)
-                print("なんと！{}は復活した！！".format(enemy.name))
-                time.sleep(0.5)
-                enemy.hp = int(enemy.max_hp / 2)
-                enemy.revival -= 1
-            else:
-                battle_win(player, enemy)
-                return True
-        else:
-            battle_win(player, enemy)
-            return True
-    return False
-def player_defeat(player):
-    if player.hp <= 0 and "死者の魂" not in player.item:
-        time.sleep(0.5)
-        print("{}は死んでしまった...".format(player.name))
-        return True
-    elif player.hp <= 0 and "死者の魂" in player.item:
-        usezomsoul(player)
-    return False
-
 def battle_True(player, enemy):
-    global NKP, MKP
-    NKP = 0
+    global MKP
+    miss_attack = 0
     MKP = 0
     enemy.hp = enemy.max_hp
     player.speed = player.speed_S
-    player.attack = player.attack_S
+    player.attack = player.attack_S + player.weapon[1]
     player.defence = player.defence_S
     player.HealC = player.HealC_S
     player.FireC = player.FireC_S
@@ -1194,9 +1297,15 @@ def battle_True(player, enemy):
             if player.speed >= enemyS:
                 player.attack_enemy(enemy)
                 if enemy.hp > 0:
-                    enemy.attack_player(player)
+                    if miss_attack >= 1:
+                        enemy.attack_player_miss(miss_attack)
+                    else:
+                        enemy.attack_player(player)
             elif player.speed < enemyS:
-                enemy.attack_player(player)
+                if miss_attack >= 1:
+                    enemy.attack_player_miss(miss_attack)
+                else:
+                    enemy.attack_player(player)
                 if player.hp > 0:
                     player.attack_enemy(enemy)
         elif command == "s":
@@ -1213,21 +1322,30 @@ def battle_True(player, enemy):
                     else:
                         player.attack_enemy_power(enemy)
                         if enemy.hp > 0:
-                            enemy.attack_player(player)
+                            if miss_attack >= 1:
+                                enemy.attack_player_miss(miss_attack)
+                            else:
+                                enemy.attack_player(player)
                         break
                 elif command_next == "s":
                     if player.SpecialC <= 0:
                         print("今は天の加護を使えない！")
                     else:
                         player.special()
-                        enemy.attack_player(player)
+                        if miss_attack >= 1:
+                            enemy.attack_player_miss(miss_attack)
+                        else:
+                            enemy.attack_player(player)
                         break
                 elif command_next == "h":
                     if player.HealC <= 0:
                         print("もう回復呪文は使えない！")
                     else:
                         player.heal()
-                        enemy.attack_player(player)
+                        if miss_attack >= 1:
+                            enemy.attack_player_miss(miss_attack)
+                        else:
+                            enemy.attack_player(player)
                         break
                 elif command_next == "f":
                     if player.FireC <= 0:
@@ -1235,7 +1353,10 @@ def battle_True(player, enemy):
                     else:
                         player.fire(enemy)
                         if enemy.hp > 0:
-                            enemy.attack_player(player)
+                            if miss_attack >= 1:
+                                enemy.attack_player_miss(miss_attack)
+                            else:
+                                enemy.attack_player(player)
                         break
                 elif command_next == " ":
                     break
@@ -1259,7 +1380,7 @@ def battle_True(player, enemy):
                 subprocess.call("cls", shell=True)
                 try:
                     if 0 <= int(select) - 1 and int(select) - 1 <= 4:
-                        useItem(player, enemy, player.item[int(select) - 1], int(select) - 1)
+                        item_use(player, enemy, player.item[int(select) - 1], int(select) - 1, miss_attack)
                         time.sleep(0.5)
                         break
                     else:
@@ -1283,13 +1404,76 @@ def battle_True(player, enemy):
             else:
                 print("逃げられなかった")
                 time.sleep(0.8)
-                enemy.attack_player(player)
+                if miss_attack >= 1:
+                    enemy.attack_player_miss(miss_attack)
+                else:
+                    enemy.attack_player(player)
         else:
             print("そんなコマンドはない！")
-        if enemy_defeat(player, enemy):
+        if defeat_enemy(player, enemy):
             break
-        if player_defeat(player):
+        if defeat_player(player):
             break
+def battle_win(player, enemy):
+    global KP, BP, GOLD
+    if enemy.name == "ヒュドラ":
+        time.sleep(0.5)
+        print("{}を倒した！".format(enemy.name))
+        BP += 1
+        time.sleep(0.8)
+        if player.level <= enemy.level:
+            KP += 2
+            if KP % 2 == 0:
+                player.level_up()
+    else:
+        time.sleep(0.5)
+        print("{}を倒した！".format(enemy.name))
+        if game_type:
+            time.sleep(0.5)
+            print("{} Gを得た".format(enemy.gold))
+            GOLD += enemy.gold
+        BP += 1
+        time.sleep(0.8)
+        if player.level <= enemy.level:
+            KP += 1
+            if KP % 2 == 0:
+                player.level_up()
+    item_get(player, enemy)
+def defeat_enemy(player, enemy):
+    if enemy.hp <= 0:
+        if enemy.name == "ゾンビ":
+            f = random.randint(1, 5)
+            if f <= 4 and enemy.revival >= 1:
+                print("{}を倒した！".format(enemy.name))
+                time.sleep(1.0)
+                print("なんと！{}は復活した！！".format(enemy.name))
+                time.sleep(0.5)
+                enemy.hp = int(enemy.max_hp / 2)
+                enemy.revival -= 1
+            else:
+                battle_win(player, enemy)
+                return True
+        else:
+            battle_win(player, enemy)
+            return True
+    return False
+def defeat_player(player):
+    if player.hp <= 0 and "死者の魂" not in player.item:
+        time.sleep(0.5)
+        print("{}は死んでしまった...".format(player.name))
+        return True
+    elif player.hp <= 0 and "死者の魂" in player.item:
+        time.sleep(0.8)
+        print("なんと、{}は「死者の魂」の効果で復活した！".format(player.name))
+        time.sleep(0.5)
+        player.hp = int(player.max_hp / 2)
+        count = 0
+        while count < 5:
+            if player.item[count] == "死者の魂":
+                player.item.pop(count)
+                break
+            count += 1
+    return False
 
 # 拠点
 def home(player):
@@ -1310,12 +1494,12 @@ def home(player):
             print("\n", "敵が現れた！")
             break
         elif select == "2":
-            itemK(player)
+            item_org(player)
         elif select == "3":
-            player.printStr()
+            player.print_str()
         else:
             print("そんなコマンドはない！")
-def homeStart(player):
+def home_start(player):
     global SP
     while True:
         select = input("どうする？ [1]ダンジョンに挑む, [2]アイテムを確認する, [3]ステータスを確認する >")
@@ -1326,16 +1510,17 @@ def homeStart(player):
             print("\n", "敵が現れた！")
             break
         elif select == "2":
-            itemK(player)
+            item_org(player)
         elif select == "3":
-            player.printStr()
+            player.print_str()
         elif select == "99":
             kinds = int(input("敵の種類を入力して下さい [0 or 1] >"))
             floor = int(input("階層を入力して下さい [0 ~ 7] >"))
             if kinds == 0:
-                enemy = createEnemies_False()[floor]
+                enemy = create_enemies()[floor]
             elif kinds == 1:
-                enemy = createEnemies_True()[floor]
+                dungeon = int(input("ダンジョンの種類を選択してください [0 ~ 2]"))
+                enemy = create_enemies_True(dungeon)[floor]
             subprocess.call("cls", shell=True)
             battle(player, enemy)
             sys.exit()
@@ -1343,7 +1528,7 @@ def homeStart(player):
             print("そんなコマンドはない！")
 
 # アイテムの整理・追加・使用
-def itemK(player): # アイテムの整理
+def item_org(player): # アイテムの確認
     while True:
         subprocess.call("cls", shell=True)
         print("どれを確認する？", end="")
@@ -1355,7 +1540,7 @@ def itemK(player): # アイテムの整理
         subprocess.call("cls", shell=True)
         try:
             if 0 <= int(select) - 1 and int(select) - 1 <= 4:
-                itemC(player.item[int(select) - 1])
+                item_display(player.item[int(select) - 1])
                 time.sleep(0.5)
                 break
             else:
@@ -1370,7 +1555,7 @@ def itemK(player): # アイテムの整理
         except IndexError:
             print("そんなコマンドはない！")
             time.sleep(0.5)
-def itemC(item_name): # アイテムの確認・説明
+def item_display(item_name): # アイテムの説明表示
     print("「{}」".format(item_name))
     time.sleep(0.5)
     if item_name == "スライムの粘液":
@@ -1395,7 +1580,7 @@ def itemC(item_name): # アイテムの確認・説明
     elif item_name == "透明な指輪":
         print("特殊な素材で構成されており、実際に手で触れることによってその存在を認知できる。")
         print("着用者の俊敏性は、ゴーストに勝るとも劣らない。")
-        print("※ 所持時、素早さが20上昇\n")
+        print("※ 所持時、素早さが50上昇\n")
     elif item_name == "腐った指輪":
         print("これを手に入れたあなたは、その見た目よりも先に強烈な悪臭に顔をしかめることになるだろう。")
         print("今にも崩れ落ちてしまいそうな程朽ちているが、反面、強力な生命力を感じる。")
@@ -1417,9 +1602,9 @@ def itemC(item_name): # アイテムの確認・説明
         print("別名、ワンショットポイズンとも呼ばれており刺されたものは致命的なダメージを受ける。")
         print("※ 使用時、敵に1ダメージ又は大ダメージ\n")
     elif item_name == "鋼鉄の指輪":
-        print("はるか昔に女性がつけていた綺麗な指輪。")
+        print("はるか昔に高貴な女性がつけていた美しい指輪。")
         print("その女性が亡くなって以降その指輪には守護の力が宿ったと言う伝説が残された。")
-        print("しかし現在所在が分からず知る者は誰も居ない。")
+        print("しかし現在所在が分からず詳細を知る者は誰も居ない。")
         print("※ 所持時、防御力が10上昇\n")
     elif item_name == "吸血の牙":
         print("ヴァンパイアが持つ背筋が凍るほどに鋭利な牙。")
@@ -1443,38 +1628,130 @@ def itemC(item_name): # アイテムの確認・説明
     elif item_name == "伝説の宝玉":
         print("縲御ｼ晁ｪｬ縺ｮ螳晉脂縲")
         print("菴ｿ逕ｨ縺励※縺ｯ縺?￠縺ｪ縺\n")
+    elif item_name == "聖印":
+        print("精巧な装飾が施された美しい紋章")
+        print("その素材が貴重であるが故に、教会の中でも高位の聖女しか扱うことを許されていない")
+        print("※ 所持時、恐怖耐性を得る")
+    elif item_name == "悪夢の残滓":
+        print("")
+        print("")
+        print("")
+    elif item_name == "木製の心臓":
+        print("")
+        print("")
+        print("")
+    elif item_name == "鉄の手枷":
+        print("")
+        print("")
+        print("")
+    elif item_name == "虚無の仮面":
+        print("")
+        print("")
+        print("")
+    elif item_name == "亡霊の灯火":
+        print("")
+        print("")
+        print("")
+    elif item_name == "腐食の牙":
+        print("")
+        print("")
+        print("")
+    elif item_name == "黄泉の心石":
+        print("")
+        print("")
+        print("")
+    elif item_name == "不死者の眼球":
+        print("")
+        print("")
+        print("")
+    elif item_name == "灼熱の核":
+        print("")
+        print("")
+        print("")
+    elif item_name == "略奪者の袋":
+        print("")
+        print("")
+        print("")
+    elif item_name == "黒曜石の魂":
+        print("")
+        print("")
+        print("")
+    elif item_name == "支配者の証":
+        print("")
+        print("")
+        print("")
     time.sleep(0.5)
-def useItem(player, enemy, item_name, item_number): #アイテムの使用
-    global NKP, MKP
-    if item_name in ["古びた指輪", "透明な指輪", "腐った指輪", "死者の魂", "番犬のチョーカー", "鋼鉄の指輪"]:
+def item_check(player): # アイテムの所持数確認
+    while True:
+        if len(player.item) > 5:
+            get = input("アイテムがいっぱいだ [1]手持ちのアイテムと交換する, [2]交換しない > ")
+            if get == "1":
+                subprocess.call("cls", shell=True)
+                print("どれを捨てる？", end="")
+                for i, j in enumerate(player.item):
+                    index = int(i)
+                    print("[{}]{}, ".format(index + 1, j), end="")
+                print("\n", "※ スペースキーで戻る")
+                select = input("> ")
+                subprocess.call("cls", shell=True)
+                try:
+                    if 0 <= int(select) - 1 and int(select) - 1 <= 5:
+                        print("{}は「{}」を捨てた".format(player.name, player.item[int(select) - 1]))
+                        player.item.pop(int(select) - 1)
+                        time.sleep(0.5)
+                        break
+                    else:
+                        print("そんなコマンドはない！")
+                        time.sleep(0.5)
+                except ValueError:
+                    if select == " ":
+                        pass
+                    else:
+                        print("そんなコマンドはない！")
+                        time.sleep(0.5)
+                except IndexError:
+                    print("そんなコマンドはない！")
+                    time.sleep(0.5)
+            elif get == "2":
+                subprocess.call("cls", shell=True)
+                print("{}は「{}」を捨てた".format(player.name, player.item[5]))
+                player.item.pop(5)
+                break
+            else:
+                print("そんなコマンドはない")
+        else:
+            break
+def item_use(player, enemy, item_name, item_number, miss_attack): #アイテムの使用
+    global MKP
+    if item_name in ["古びた指輪", "透明な指輪", "腐った指輪", "死者の魂", "番犬のチョーカー", "鋼鉄の指輪", "聖印", "木製の心臓", "鉄の手枷"]:
         time.sleep(0.5)
         print("{}は「{}」を使った".format(player.name, item_name))
         time.sleep(0.5)
         print("しかし何も起こらなかった")
         time.sleep(0.8)
     elif item_name == "スライムの粘液":
-        nkp_select = random.randint(1, 5)
+        miss_select = random.randint(1, 5)
         time.sleep(0.5)
         print("{}は「スライムの粘液」を投げつけた".format(player.name))
         player.item.pop(item_number)
-        if nkp_select <= 3:
+        if miss_select <= 3:
             time.sleep(0.8)
             print("命中した！")
             time.sleep(0.5)
             print("{}はとても動きづらそうにしている".format(enemy.name))
             time.sleep(0.8)
-            NKP += 1
+            miss_attack += 1
         else:
             time.sleep(0.5)
             print("外してしまった…")
             time.sleep(0.8)
     elif item_name == "スライムゼリー":
         player.HealC += 1
-        if player.HealC > 2:
-            player.HealC = 2
+        if player.HealC > player.HealC_S:
+            player.HealC = player.HealC_S
         player.FireC += 1
-        if player.FireC > 3:
-            player.FireC = 3
+        if player.FireC > player.HealC_S:
+            player.FireC = player.HealC_S
         time.sleep(0.5)
         print("{}は「スライムゼリー」を使った".format(player.name))
         time.sleep(0.5)
@@ -1509,7 +1786,7 @@ def useItem(player, enemy, item_name, item_number): #アイテムの使用
             time.sleep(0.5)
             print("しばらくの間、敵に気付かれずに行動できそうだ")
             time.sleep(0.8)
-            NKP += 3
+            miss_attack += 3
     elif item_name == "キャンディー":
         time.sleep(0.5)
         print("{}は「キャンディー」を食べた".format(player.name))
@@ -1521,7 +1798,7 @@ def useItem(player, enemy, item_name, item_number): #アイテムの使用
     elif item_name == "毒針":
         time.sleep(0.5)
         print("{}は{}に対して「毒針」を思い切り投げつけた！".format(player.name, enemy.name))
-        doku = random.randint(1, 2)
+        doku = random.randint(1, 3)
         if doku <= 1:
             time.sleep(0.8)
             print("深く突き刺さった！")
@@ -1605,11 +1882,29 @@ def useItem(player, enemy, item_name, item_number): #アイテムの使用
                     [1.0, "\n"], \
                     [0.1,  "成功。\n\n"] ]
         for i in range(len(message)):
-            timePrint(message[i][0], message[i][1])
+            print_time(message[i][0], message[i][1])
         time.sleep(1.0)
         print("\033[31m'Held name = Untot'\033[0m")
         sys.exit()
-def getItem(player, enemy): # アイテムの入手
+    elif item_name == "悪夢の残滓":
+        time.sleep(0.5)
+        print("{}は{}を使った".format(player.name, item_name))
+        time.sleep(0.5)
+        print("霧状のそれは、{}の周囲に纏わりついた".format(enemy.name))
+        time.sleep(0.5)
+        miss_attack += 1
+        print("{}は恐怖で足がすくんでいる".format(enemy.name))
+        time.sleep(0.8)
+        player.item.pop(item_number)
+    elif item_name == "虚無の仮面":
+        pass
+
+def item_passive_check(player):
+    if "鉄の手枷" in player.item:
+        player.attack += 30
+        player.defence -= 30
+
+def item_get(player, enemy): # アイテムの入手
     global EP
     random_number_item = random.randint(1, 10)
     item_type = enemy.item[0]
@@ -1634,46 +1929,8 @@ def getItem(player, enemy): # アイテムの入手
             player.item += [enemy.item[1]]
             print("なんと、{}は「{}」を落とした".format(enemy.name, enemy.item[1]))
     time.sleep(0.5)
-    while True:
-        if len(player.item) > 5:
-            get = input("アイテムがいっぱいだ [1]手持ちのアイテムと交換する, [2]交換しない > ")
-            if get == "1":
-                subprocess.call("cls", shell=True)
-                print("どれを捨てる？", end="")
-                for i, j in enumerate(player.item):
-                    index = int(i)
-                    print("[{}]{}, ".format(index + 1, j), end="")
-                print("\n", "※ スペースキーで戻る")
-                select = input("> ")
-                subprocess.call("cls", shell=True)
-                try:
-                    if 0 <= int(select) - 1 and int(select) - 1 <= 5:
-                        print("{}は「{}」を捨てた".format(player.name, player.item[int(select) - 1]))
-                        player.item.pop(int(select) - 1)
-                        time.sleep(0.5)
-                        break
-                    else:
-                        print("そんなコマンドはない！")
-                        time.sleep(0.5)
-                except ValueError:
-                    if select == " ":
-                        pass
-                    else:
-                        print("そんなコマンドはない！")
-                        time.sleep(0.5)
-                except IndexError:
-                    print("そんなコマンドはない！")
-                    time.sleep(0.5)
-            elif get == "2":
-                subprocess.call("cls", shell=True)
-                print("{}は「{}」を捨てた".format(player.name, player.item[5]))
-                player.item.pop(5)
-                break
-            else:
-                print("そんなコマンドはない")
-        else:
-            break
-def usezomring(player): # 腐った指輪用の処理
+    item_check(player)
+def zomring_use(player): # 腐った指輪用の処理
     if "腐った指輪" in player.item:
         time.sleep(0.5)
         print("「腐った指輪」の効果でhpが15回復した\n")
@@ -1681,69 +1938,58 @@ def usezomring(player): # 腐った指輪用の処理
         player.hp += 15
         if player.hp >= player.max_hp:
             player.hp = player.max_hp
-def usezomsoul(player): # 死者の魂用の処理
-        time.sleep(0.8)
-        print("なんと、{}は「死者の魂」の効果で復活した！".format(player.name))
-        time.sleep(0.5)
-        player.hp = int(player.max_hp / 2)
-        count = 0
-        while count < 5:
-            if player.item[count] == "死者の魂":
-                player.item.pop(count)
-                break
-            count += 1
 
 # 一文字ずつ表示
-def timePrint(dis, str):
+def print_time(dis, str):
     leng = len(str)
     for i in range(leng):
         print(str[i], end="", flush=True)
         time.sleep(dis)
 
 # 敵の作成
-def createEnemies_False():
+def create_enemies():
     enemies = [
         [
-            EnemySli("スライム", 30, 10, 10, 0, 1, [0, "スライムの粘液", "スライムゼリー"]),
-            EnemyGob("ゴブリン", 50, 20, 0, 5, 1, [0, "古びた指輪", "ポーション"]),
+            Enemy_Sli("スライム", 30, 10, 10, 0, 1, [0, "スライムの粘液", "スライムゼリー"]),
+            Enemy_Gob("ゴブリン", 50, 20, 0, 5, 1, [0, "古びた指輪", "ポーション"], 0),
         ],
         [
-            EnemyZom("ゾンビ", 120, 50, 0, 0, 2, [0, "腐った指輪", "死者の魂"], 1),
-            EnemyGho("ゴースト", 3, 35, 99, 99, 2, [0, "透明な指輪", "透明な液体"]),
+            Enemy_Zom("ゾンビ", 120, 50, 0, 0, 2, [0, "腐った指輪", "死者の魂"], 1),
+            Enemy_Gho("ゴースト", 3, 35, 99, 99, 2, [0, "透明な指輪", "透明な液体"]),
         ],
         [
-            EnemyKel("ケルベロス", 150, 70, 15, 15, 3, [0, "番犬のチョーカー", "キャンディー"]),
-            EnemySco("スコーピオン", 75, 80, 30, 15, 3, [0, "毒針", "鋼鉄の指輪"]),
+            Enemy_Kel("ケルベロス", 150, 70, 15, 15, 3, [0, "番犬のチョーカー", "キャンディー"]),
+            Enemy_Sco("スコーピオン", 75, 80, 30, 15, 3, [0, "毒針", "鋼鉄の指輪"]),
         ],
-        EnemyVan("ヴァンパイア", 200, 80, 20, 10, 4, [0, "吸血の牙", "ヴァンパイアの血液"]),
-        EnemyGol("ゴーレム", 120, 80, 20, 0, 4, [1, "古代の秘宝"]),
-        EnemyHyu("ヒュドラ", 400, 100, 30, 40, 5, [2, "英雄の証"]),
-        BOSSEnemyDor("ドラゴン", 800, 120, 40, 35, 6, [3, "伝説の秘宝"]),
-        Enemy("死神", 999, 200, 50, 70, 99, [3, "伝説の秘宝"]),
+        Enemy_Van("ヴァンパイア", 200, 80, 20, 10, 4, [0, "吸血の牙", "ヴァンパイアの血液"]),
+        Enemy_Gol("ゴーレム", 120, 80, 20, 0, 4, [1, "古代の秘宝"], 0),
+        Enemy_Hyu("ヒュドラ", 400, 100, 30, 40, 5, [2, "英雄の証"]),
+        BOSSEnemy_Dor("ドラゴン", 800, 120, 40, 35, 6, [3, "伝説の宝玉"], 0),
+        BOSSEnemy_Death("死神", 999, 70, 40, 70, 99, [3, "伝説の宝玉"]),
     ]
     return enemies
-def createEnemies_True(type):
+def create_enemies_True(type):
     enemies = ""
     if type == 1:
         enemies = [
-            EnemyNight("ナイトメア", 500, 200, 50, 30, 5, [1, "吸血の牙"], 75),
-            EnemyMar("マリオネット", 700, 130, 50, 0, 5, [1, "古代の秘宝"], 100),
-            EnemyDeaPer("デスペラード", 700, 1, 100, 40, 5, [1, "英雄の証"], 150),
-            EnemyWitch("失意の魔女", 1200, 220, 70, 10, 5, [1, "伝説の秘宝"], 500),
+            Enemy_Night("ナイトメア", 500, 200, 50, 30, 5, [1, "悪夢の残滓"], 75),
+            Enemy_Mar("マリオネット", 700, 130, 50, 0, 5, [1, "木製の心臓"], 100),
+            Enemy_DeaPer("デスペラード", 700, 1, 100, 40, 5, [1, "鉄の手枷"], 150),
+            BOSSEnemy_Witch("失意の魔女", 1200, 220, 70, 10, 5, [1, "虚無の仮面"], 500),
         ]
     elif type == 2:
         enemies = [
-            EnemyNight("ナイトメア", 500, 200, 50, 30, 5, [1, "吸血の牙"], 75),
-            EnemyMar("マリオネット", 700, 130, 50, 0, 5, [1, "古代の秘宝"], 100),
-            EnemyDeaPer("デスペラード", 700, 1, 100, 40, 5, [1, "英雄の証"], 150),
-            EnemyWitch("失意の魔女", 1200, 220, 70, 10, 5, [1, "伝説の秘宝"], 500),
+            Enemy_DarGho("ダークゴースト", 500, 200, 50, 30, 5, [1, "亡霊の灯火"], 75),
+            Enemy_GriZom("グリムゾンビ", 700, 130, 50, 0, 5, [1, "腐食の牙"], 100),
+            Enemy_DeaHou("デスハウンド", 700, 1, 100, 40, 5, [1, "黄泉の心石"], 150),
+            BOSSEnemy_VanLor("ヴァンパイアロード", 1200, 220, 70, 10, 5, [1, "不死者の眼球"], 500),
         ]
     elif type == 3:
         enemies = [
-            EnemyNight("ナイトメア", 500, 200, 50, 30, 5, [1, "吸血の牙"], 75),
-            EnemyMar("マリオネット", 700, 130, 50, 0, 5, [1, "古代の秘宝"], 100),
-            EnemyDeaPer("デスペラード", 700, 1, 100, 40, 5, [1, "英雄の証"], 150),
-            EnemyWitch("失意の魔女", 1200, 220, 70, 10, 5, [1, "伝説の秘宝"], 500),
+            Enemy_InfeSli("インフェルノスライム", 500, 200, 50, 30, 5, [1, "灼熱の核"], 75),
+            Enemy_HighGob("ハイゴブリン", 700, 130, 50, 0, 5, [1, "略奪者の袋"], 100),
+            Enemy_ObsidianGol("オブシディアンゴーレム", 700, 1, 100, 40, 5, [1, "黒曜石の魂"], 150, 0),
+            BOSSEnemy_ShadowDra("シャドウドラゴン", 1200, 220, 70, 10, 5, [1, "支配者の証"], 500),
         ]
     return enemies
 
@@ -1769,7 +2015,7 @@ def town(player):
                 select_next = input("> ")
                 subprocess.call("cls", shell=True)
                 if select_next == "1" or select_next == "2" or select_next == "3":
-                    now_enemy = createEnemies_True(int(select_next))
+                    now_enemy = create_enemies_True(int(select_next))
                     print("\n敵が現れた！")
                     time.sleep(0.5)
                     return now_enemy
@@ -1778,11 +2024,128 @@ def town(player):
                 else:
                     print("そんなコマンドはない！")
         elif select == "2":
-            itemK(player)
+            item_org(player)
         elif select == "3":
-            player.printStr()
+            player.print_str()
+        elif select == "4":
+            town_weapon(player)
+        elif select == "5":
+            town_item(player)
+        elif select == "6":
+            town_bar(player)
+        else:
+            subprocess.call("cls", shell=True)
+            print("そんなコマンドはない！")
+def town_weapon(player):
+    global GOLD
+    subprocess.call("cls", shell=True)
+    print("「……らっしゃい」")
+    time.sleep(0.8)
+    print("強面な男が座っている")
+    while True:
+        time.sleep(0.5)
+        weapon_str = ["どれを買おう？ "]
+        weapon_num = []
+        for i in range(len(shop_weapon_list)):
+            weapon_num.append(str(i + 1))
+            weapon_str.append("[{}]{}({} G), ".format(i + 1, shop_weapon_list[i][0], shop_weapon_list[i][2]))
+        print("".join(weapon_str))
+        print("※ スペースキーで戻る")
+        select = input("> ")
+        print()
+        subprocess.call("cls", shell=True)
+        if select in weapon_num:
+            if GOLD < shop_weapon_list[int(select) - 1][2]:
+                print("金が足りない…")
+            else:
+                player.weapon = shop_weapon_list[int(select) - 1]
+                print("{}は{}を買った".format(player.name, shop_weapon_list[int(select) - 1][0]))
+                GOLD -= shop_weapon_list[int(select) - 1][2]
+                time.sleep(0.5)
+                break
+        elif select == " ":
+            subprocess.call("cls", shell=True)
+            break
         else:
             print("そんなコマンドはない！")
+        time.sleep(0.5)
+def town_item(player):
+    global GOLD
+    subprocess.call("cls", shell=True)
+    print("「いらっしゃい！」")
+    time.sleep(0.8)
+    print("明るい女性が元気な声で出迎えてくれる")
+    while True:
+        time.sleep(0.5)
+        item_str = ["どれを買おう？ "]
+        item_num = []
+        for i in range(len(shop_item_list)):
+            item_num.append(str(i + 1))
+            item_str.append("[{}]{}({} G), ".format(i + 1, shop_item_list[i][0], shop_item_list[i][1]))
+        print("".join(item_str))
+        print("※ スペースキーで戻る")
+        select = input("> ")
+        print()
+        subprocess.call("cls", shell=True)
+        if select in item_num:
+            if GOLD < shop_item_list[int(select) - 1][1]:
+                print("金が足りない…")
+            elif len(player.item) >= 5:
+                print("アイテムがいっぱいだ…")
+            else:
+                player.item += [shop_item_list[int(select) - 1][0]]
+                print("{}は{}を買った".format(player.name, shop_item_list[int(select) - 1][0]))
+                GOLD -= shop_item_list[int(select) - 1][1]
+                time.sleep(0.5)
+                break
+        elif select == " ":
+            break
+        else:
+            print("そんなコマンドはない！")
+        time.sleep(0.5)
+def town_bar(player):
+    global GOLD
+    subprocess.call("cls", shell=True)
+    print("少し騒々しいが、一息つくぐらいならば問題なさそうだ")
+    while True:
+        time.sleep(0.5)
+        print("どうしよう？ [1]休憩する(200 G), [2]酒を飲む(100 G)")
+        print("※ スペースキーで戻る")
+        select = input("> ")
+        print()
+        subprocess.call("cls", shell=True)
+        if select == "1":
+            if GOLD < 200:
+                print("金が足りない…")
+            else:
+                player.hp = player.max_hp
+                GOLD -= 200
+                print("{}は酒場の中にある宿屋で体を休めた".format(player.name))
+                time.sleep(0.5)
+                print("{}のHPが最大になった".format(player.name))
+                time.sleep(0.5)
+                break
+        elif select == "2":
+            if GOLD < 100:
+                print("金が足りない…")
+            else:
+                print("{}は店主の出した酒を一気に飲み干した".format(player.name))
+                time.sleep(0.5)
+                print("HPが少し回復した")
+                time.sleep(0.5)
+                if player.hp < player.max_hp / 4:
+                    print("「…あまり無理をするなよ」")
+                    time.sleep(0.5)
+                player.hp += 250
+                if player.hp > player.max_hp:
+                    player.hp = player.max_hp
+                GOLD -= 100
+                break
+        elif select == " ":
+            break
+        else:
+            print("そんなコマンドはない！")
+        time.sleep(0.5)
 
 if __name__ == "__main__":
     main()
