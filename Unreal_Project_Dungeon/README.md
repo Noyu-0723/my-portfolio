@@ -24,7 +24,7 @@ Unreal Engineで動作する、3D謎解きアクションゲームです。
 
 ## プレイ方法
 1. [こちら](https://drive.google.com/file/d/1EwJ_rjkhdFZol8wbPh3WoPVgfjSBuMju/view?usp=drive_link)からGoogle Drive上にあるファイルをダウンロードする。
-2. zipファイルをダウンロードする。
+2. zipファイルを展開する。
 3. 「MyProject.uproject」を実行する 。 
    ※別途Unreal Engineのインストールが必要になります。
 
