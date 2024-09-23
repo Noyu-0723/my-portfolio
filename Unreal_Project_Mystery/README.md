@@ -23,6 +23,6 @@ Unreal Engine4.27
     ※別途Unreal Engineのインストールが必要になります。
 
 ## 開発者について
-名前: 野村佑哉
-GitHub: Noyu-0723
+名前: 野村佑哉  
+GitHub: Noyu-0723  
 Email: yuuya07237@gmail.com
