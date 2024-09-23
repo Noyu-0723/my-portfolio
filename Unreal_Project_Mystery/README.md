@@ -10,7 +10,7 @@ Unreal Engineで動作する、3D謎解きアクションゲームです。
 ### 基本操作
 - **移動**: WASDキー  
 - **ジャンプ**: スペースキー  
-- **アクション**: 左クリック
+- **アクション**: 左クリック  
 　※上手く動かないときは、左クリックをしてみてください、
 
 ## 使用フレームワーク
@@ -19,7 +19,7 @@ Unreal Engine4.27
 ## プレイ方法
 1. [こちら](https://drive.google.com/file/d/1dNZ5XWZ0ckeHohKIzFnzmbNnqezy7sLw/view?usp=drive_link)からGoogle Drive上にあるファイルをダウンロードする。
 2. zipファイルを展開する。
-3. 「MyProject.uproject」を実行する 。 
+3. 「MyProject.uproject」を実行する 。  
     ※別途Unreal Engineのインストールが必要になります。
 
 ## 開発者について
